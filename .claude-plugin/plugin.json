@@ -1,9 +1,18 @@
 {
   "name": "tickturn",
-  "version": "0.1.0",
-  "description": "Время каждого ответа Claude и сумма за сессию: полоса над полем ввода и панель /time",
+  "version": "0.2.0",
+  "description": "Time of each Claude turn and the session total: a band above the prompt and a /time pane. Russian or English UI by the system language.",
   "types": "./types/index.d.ts",
   "author": {
     "name": "dimakotov1c"
+  },
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "UI language: auto (Russian when the system language is Russian, English otherwise), ru or en",
+      "default": "auto",
+      "options": ["auto", "ru", "en"]
+    }
   }
 }

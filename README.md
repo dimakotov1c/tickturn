@@ -10,7 +10,7 @@
 - **Панель истории** (`/time` или кнопка **История**) — все запросы сессии с длительностью и итогом.
 - Прерванные ходы помечаются `(прервано)`, завершившиеся ошибкой — `(ошибка)`. `/clear` сбрасывает историю.
 
-Работает в терминале и в десктопном приложении Claude.
+Работает в терминале и в десктопном приложении Claude. Язык интерфейса подбирается по языку системы: русский или английский.
 
 | В покое | Панель истории |
 | --- | --- |
@@ -39,18 +39,30 @@ claude plugin install tickturn@tickturn
 claude --plugin-dir /path/to/tickturn
 ```
 
+## Язык
+
+По умолчанию (`auto`) мод рисует подписи по-русски, если язык системы русский, иначе по-английски. Язык системы читается из переменных `LC_ALL`, `LC_MESSAGES`, `LANG`, `LANGUAGE` (Linux, macOS), а без них — из локали окружения (Windows: региональный формат).
+
+Переопределить можно в настройке мода `tickturn.language` (`/config` → tickturn → Language: `auto`, `ru`, `en`) или в `~/.claude/settings.json`:
+
+```json
+{ "pluginConfigs": { "tickturn": { "options": { "language": "en" } } } }
+```
+
 ## Как это работает
 
 Мод — это модуль хуков (`hooks/register.tsx`):
 
 - `turn.start` / `turn.complete` — измеряют каждый ход главного цикла (`durationMs` от движка); ходы субагентов отдельно не считаются.
 - `ui.render` на `AbovePrompt` и `Pane` — рисуют полосу и историю.
+- `$.env.get` и `Intl` — определяют язык один раз при загрузке.
 - Состояние живёт в `$.state` (`types/index.d.ts` — его контракт) и переживает горячую перезагрузку модуля в пределах сессии.
 
 ## Разработка
 
 ```bash
 claude plugin validate .
+claude plugin test .
 ```
 
 Проверка типов — `tsc -p .` после того, как движок положит типы в `.claude-plugin/types/` (он делает это при первой загрузке).
@@ -75,7 +87,7 @@ A [Claude Code](https://claude.com/claude-code) mod that shows how much time Cla
 - **History pane** (`/time` or the **History** button) — every request of the session with its duration and the total.
 - Interrupted turns are marked `(interrupted)`, failed ones `(error)`. `/clear` resets the history.
 
-Works in the terminal and in the Claude desktop app. The mod's own labels are currently in Russian; the screenshots below are translated.
+Works in the terminal and in the Claude desktop app. The UI follows the system language: Russian or English.
 
 | Idle | History pane |
 | --- | --- |
@@ -104,18 +116,30 @@ Or for one session only:
 claude --plugin-dir /path/to/tickturn
 ```
 
+## Language
+
+By default (`auto`) the labels are Russian when the system language is Russian and English otherwise. The system language is read from `LC_ALL`, `LC_MESSAGES`, `LANG`, `LANGUAGE` (Linux, macOS); with none set (Windows) from the environment's locale, the regional format.
+
+Override it in the mod's `tickturn.language` setting (`/config` → tickturn → Language: `auto`, `ru`, `en`) or in `~/.claude/settings.json`:
+
+```json
+{ "pluginConfigs": { "tickturn": { "options": { "language": "en" } } } }
+```
+
 ## How it works
 
 The mod is a hooks module (`hooks/register.tsx`):
 
 - `turn.start` / `turn.complete` — measure each main-loop turn (`durationMs` from the engine); subagent turns are not counted separately.
 - `ui.render` on `AbovePrompt` and `Pane` — draw the band and the history.
+- `$.env.get` and `Intl` — pick the language once at load.
 - State lives in `$.state` (`types/index.d.ts` is its contract) and survives hot reloads of the module within a session.
 
 ## Development
 
 ```bash
 claude plugin validate .
+claude plugin test .
 ```
 
 Type-check with `tsc -p .` once the engine has laid the types into `.claude-plugin/types/` (it does so on the first load).

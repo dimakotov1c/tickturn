@@ -69,17 +69,17 @@ MIT
 
 A [Claude Code](https://claude.com/claude-code) mod that shows how much time Claude spent on each request and on the whole session.
 
-![Band above the prompt with a live timer and the history pane](docs/screenshots/mock-running.png)
+![Band above the prompt with a live timer and the history pane](docs/screenshots/mock-running-en.png)
 
-- **Band above the prompt** — a live timer while a turn runs (`⏱ Идёт: 0:42 · Сессия: 4:22 · запросов: 7`), the last turn's time when idle.
-- **History pane** (`/time` or the **История** button) — every request of the session with its duration and the total.
-- Interrupted turns are marked `(прервано)`, failed ones `(ошибка)`. `/clear` resets the history.
+- **Band above the prompt** — a live timer while a turn runs (`⏱ Running: 0:42 · Session: 4:22 · requests: 7`), the last turn's time when idle.
+- **History pane** (`/time` or the **History** button) — every request of the session with its duration and the total.
+- Interrupted turns are marked `(interrupted)`, failed ones `(error)`. `/clear` resets the history.
 
-Works in the terminal and in the Claude desktop app. The UI labels are in Russian.
+Works in the terminal and in the Claude desktop app. The mod's own labels are currently in Russian; the screenshots below are translated.
 
 | Idle | History pane |
 | --- | --- |
-| ![Band after a turn finished](docs/screenshots/mock-idle-band.png) | ![The history pane](docs/screenshots/mock-idle-pane.png) |
+| ![Band after a turn finished](docs/screenshots/mock-idle-en-band.png) | ![The history pane](docs/screenshots/mock-idle-en-pane.png) |
 
 ## Install
 

@@ -1,0 +1,13 @@
+{
+  "name": "tickturn",
+  "owner": {
+    "name": "dimakotov1c"
+  },
+  "plugins": [
+    {
+      "name": "tickturn",
+      "source": "./"
+    }
+  ],
+  "description": "Claude Code mods by dimakotov1c"
+}

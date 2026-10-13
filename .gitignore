@@ -1,0 +1,5 @@
+# Types the engine lays beside the mod on load; regenerated, not sources
+.claude-plugin/types/
+.claude/
+tsconfig.json
+node_modules/

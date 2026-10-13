@@ -1,0 +1,9 @@
+{
+  "name": "tickturn",
+  "version": "0.1.0",
+  "description": "Время каждого ответа Claude и сумма за сессию: полоса над полем ввода и панель /time",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "dimakotov1c"
+  }
+}

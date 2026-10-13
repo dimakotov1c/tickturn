@@ -20,10 +20,8 @@ const fmt = (seconds: number) => {
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`
 }
 
-const norm = (text: string) => text.replace(/\s+/g, ' ').trim()
-
 const label = (text: string) => {
-  const one = Array.from(norm(text))
+  const one = Array.from(text.replace(/\s+/g, ' ').trim())
   if (one.length === 0) return '(без текста)'
   return one.length > LABEL_CHARS
     ? one.slice(0, LABEL_CHARS - 1).join('') + '…'
@@ -33,12 +31,8 @@ const label = (text: string) => {
 const mark = (reason: TurnRecord['reason']) =>
   reason === 'aborted' ? ' (прервано)' : reason === 'answer' ? '' : ' (ошибка)'
 
-type PromptRow = { uuid: string; text: string }
-
 export const register: Register = on => {
   let isRunning = false
-  // The person's prompt row appended before its turn.start arrived.
-  let pendingPrompt: PromptRow | null = null
 
   on('session.start', async ($, e, next) => {
     await $.command.register({
@@ -53,32 +47,11 @@ export const register: Register = on => {
     return next(e)
   })
 
-  // The prompt's transcript row: its uuid is what the pane scrolls to.
-  on('session.append', { door: 'prompt' }, async ($, e, next) => {
-    if (e.agentId !== undefined) return next(e)
-
-    const text = e.message.content
-      .map(block => (block.type === 'text' ? block.text : ''))
-      .join('')
-    const row: PromptRow = { uuid: e.uuid, text }
-    const current = await read($, running)
-    if (current !== null && current.messageId === undefined && norm(current.text) === norm(text)) {
-      await update($, running, r => (r ? { ...r, messageId: row.uuid } : r))
-    } else {
-      pendingPrompt = row
-    }
-
-    return next(e)
-  })
-
   on('turn.start', async ($, e, next) => {
-    const pending = pendingPrompt
-    pendingPrompt = null
     const turn: RunningTurn = {
       id: e.turnId,
       text: e.text,
       startedAt: await $.clock.now(),
-      ...(pending !== null && norm(pending.text) === norm(e.text) ? { messageId: pending.uuid } : {}),
     }
     await update($, running, () => turn)
     isRunning = true
@@ -90,13 +63,11 @@ export const register: Register = on => {
     if (e.agentId !== undefined) return next(e)
 
     const current = await read($, running)
-    const own = current?.id === e.turnId ? current : null
     const record: TurnRecord = {
       id: e.turnId,
-      text: own?.text ?? '',
+      text: current?.id === e.turnId ? current.text : '',
       seconds: Math.round(e.durationMs / 1000),
       reason: e.reason,
-      ...(own?.messageId !== undefined ? { messageId: own.messageId } : {}),
     }
     await update($, turns, list => [...list, record].slice(-MAX_TURNS))
     await update($, running, () => null)
@@ -159,37 +130,23 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
-    const { Box, Button, Text } = $.ui.resolve(e)
+    const { Box, Text } = $.ui.resolve(e)
     const list = await read($, turns)
     const current = await read($, running)
     const done = list.reduce((sum, t) => sum + t.seconds, 0)
     const now = current ? Math.round(((await $.clock.now()) - current.startedAt) / 1000) : 0
 
-    type Row = { id: string; n: number; text: string; time: string; messageId?: string }
-    const rows: Row[] = list.map((t, i) => ({
-      id: t.id,
+    const rows: { n: number; text: string; time: string }[] = list.map((t, i) => ({
       n: i + 1,
       text: label(t.text) + mark(t.reason),
       time: fmt(t.seconds),
-      ...(t.messageId !== undefined ? { messageId: t.messageId } : {}),
     }))
     if (current) {
-      rows.push({
-        id: current.id,
-        n: rows.length + 1,
-        text: label(current.text) + ' …',
-        time: fmt(now),
-        ...(current.messageId !== undefined ? { messageId: current.messageId } : {}),
-      })
+      rows.push({ n: rows.length + 1, text: label(current.text) + ' …', time: fmt(now) })
     }
 
     const room = Math.max(1, (e.viewport?.rows ?? 24) - 6)
     const shown = rows.slice(-room)
-
-    const jumpTo = (messageId: string) => async () => {
-      const moved = await $.ui.scroll({ to: { requestId: messageId }, block: 'center' })
-      if (moved.deny !== undefined) $.ui.toast(`Не удалось перейти к сообщению: ${moved.deny}`)
-    }
 
     return (
       <Box flexDirection="column">
@@ -198,16 +155,10 @@ export const register: Register = on => {
           <Text dimColor>… ещё {rows.length - shown.length} выше</Text>
         )}
         {shown.map(row => (
-          <Box key={`row:${row.id}`} justifyContent="space-between" gap={1}>
-            {row.messageId !== undefined ? (
-              <Button key={`jump:${row.id}`} plain onPress={jumpTo(row.messageId)}>
-                {row.n}. {row.text}
-              </Button>
-            ) : (
-              <Text>
-                {row.n}. {row.text}
-              </Text>
-            )}
+          <Box key={String(row.n)} justifyContent="space-between" gap={1}>
+            <Text>
+              {row.n}. {row.text}
+            </Text>
             <Text>{row.time}</Text>
           </Box>
         ))}
